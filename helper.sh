@@ -83,6 +83,14 @@ if test "x$INPUTFILE" == "x" ; then
   exit 4
 fi
 
+if ! [ -f "$INPUTFILE" ]
+then
+  echo Error: INPUTFILE variable does not match with an text file
+  echo example:
+  echo export INPUTFILE=lista_exomas_completa.txt
+  exit 4
+fi
+
 function cache_squeue
 {
    if ! test -s  ${CACHE_SQUEUE_FILE} || find /tmp/ -maxdepth 1 -iname $CACHE_SQUEUE_FILE_BN -mmin +1 |grep $CACHE_SQUEUE_FILE_BN 2> /dev/null ; then
