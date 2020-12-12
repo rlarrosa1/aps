@@ -91,6 +91,12 @@ then
   exit 4
 fi
 
+if ! [ -s "$INPUTFILE" ]
+then
+  echo Error: $INTPUTFILE file is empty. Please add the mandatory information before start
+  exit 4
+fi
+
 function cache_squeue
 {
    if ! test -s  ${CACHE_SQUEUE_FILE} || find /tmp/ -maxdepth 1 -iname $CACHE_SQUEUE_FILE_BN -mmin +1 |grep $CACHE_SQUEUE_FILE_BN 2> /dev/null ; then
