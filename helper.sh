@@ -91,9 +91,11 @@ then
   exit 4
 fi
 
-if ! [ -s "$INPUTFILE" ]
+lines=$(wc -l $INPUTFILE)
+
+if [[ ${lines:0:1} -lt 2 ]]
 then
-  echo Error: $INTPUTFILE file is empty. Please add the mandatory information before start
+  echo Error: $INPUTFILE is empty. Please add the information before start
   exit 4
 fi
 
