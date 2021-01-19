@@ -1,19 +1,15 @@
 # variables globales
 
-
-
-
-
 if test "x$LOG" == "x" ; then
-  export LOG=$PWD/crea_trabajos.log
+  export LOG=$PWD/works.log
 fi
 if test "x$LOGERR" == "x" ; then
-  export LOGERR=$PWD/envia_trabajos.err
+  export LOGERR=$PWD/works_trace.err
 fi
 export CACHE_SQUEUE_FILE=/tmp/squeue_cache.`whoami`.tmp
 export CACHE_SQUEUE_FILE_BN=`basename $CACHE_SQUEUE_FILE`
+
 if test "x$JOB_SOURCE" == "x" ; then
-#  export JOB_SOURCE=originales
   echo Error: path of work files must be specified in env var JOB_SOURCE
   echo For example:
   echo export JOB_SOURCE=${PWD}/worksteps
@@ -25,21 +21,21 @@ else if test "${JOB_SOURCE:0:1}" != "/" && test "${JOB_SOURCE:0:1}" != "~" ; the
    fi
 fi
 
-if test -z "$EXPERIMENTO" ; then
-	echo ERROR: environment variable EXPERIMENTO not defined.
+if test -z "$EXPERIMENT" ; then
+	echo ERROR: environment variable EXPERIMENT not defined.
 	echo It should be defined inside an ini*.sh file.
 	exit 2
 fi
 
 
-if ! grep -v \# ini*.sh| grep ${EXPERIMENTO} > /dev/null; then
-        echo ERROR : current dir does not contain an init file for experiment ${EXPERIMENTO}
+if ! grep -v \# ini*.sh| grep ${EXPERIMENT} > /dev/null; then
+        echo ERROR : current directory does not contain an init file for experiment ${EXPERIMENT}
         exit 2
 fi
 
-if test "x$GENOMA_REFERENCIA" == "x" ; then
-  export GENOMA_REFERENCIA=/mnt/home/soft/human/data/hg38/hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips
-  echo Warning: Path to reference genome not defined, defaults to $GENOMA_REFERENCIA
+if test "x$REFERENCE_GENOME" == "x" ; then
+  export REFERENCE_GENOME=/mnt/home/soft/human/data/hg38/hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips
+  echo Warning: Path to reference genome not defined, defaults to $REFERENCE_GENOME
 fi
 if test "x$ORIGEN_DATOS" == "x" ; then
 #  export ORIGEN_DATOS=/mnt/scratch/users/pab_001_uma/macarroyo/EGA/datos_originales/descomprimidos/
@@ -77,7 +73,7 @@ export DIR_PREFIX=SAMPLE_
 
 if test "x$INPUTFILE" == "x" ; then 
   #export INPUTFILE=lista_exomas_completa.txt
-  echo Error: path of file that contains sample infoi must be specified in env var INPUTFILE
+  echo Error: path of file that contains sample info must be specified in env var INPUTFILE
   echo example:
   echo export INPUTFILE=lista_exomas_completa.txt
   exit 4
@@ -85,7 +81,7 @@ fi
 
 if ! [ -f "$INPUTFILE" ]
 then
-  echo Error: INPUTFILE variable does not match with an text file
+  echo Error: INPUTFILE variable does not match with a text file
   echo example:
   echo export INPUTFILE=lista_exomas_completa.txt
   exit 4

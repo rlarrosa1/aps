@@ -1,22 +1,16 @@
 #!/usr/bin/env bash
 
-# Esta carpeta tiene que contener los indices del genoma de referencia para las
-
 export DIRS=`echo "${BASH_SOURCE%/*}/"`
-
-#module purge
-
-export LOG=$PWD/crea_trabajos.log
-export LOGERR=$PWD/envia_trabajos.err
+export LOG=$PWD/works.log
+export LOGERR=$PWD/works_trace.err
 
 echo `date` to create files in `pwd` >> $LOG
 
 function show_help
 {
-#        echo "-d dir            only check directory dir."
-        echo "-s script         only copy given script, it can contain wildchars."
-        echo "-d directory      only create files in given directory."
-        echo "-i outfile        writes in outfile info from the output of the scripts, using job.info to extract it."
+        echo "-s script         Only copy given script, it can contain wildchars."
+        echo "-d directory      Only create files in given directory."
+        echo "-i outfile        Writes in outfile info from the output of the scripts, using job.info to extract it."
 }
 
 OPTIND=1
@@ -24,11 +18,6 @@ unset CHECK
 export FILTER_SCRIPTS="[1-9]*.sh*"
 export INFO=false
 export VERBOSE=false
-
-let nerrors=0
-let unexec=0
-let nchecks=0
-
 
 while getopts "h?vd:s:i:" opt; do
     case "$opt" in
@@ -52,8 +41,8 @@ shift $((OPTIND-1))
 
 . ${DIRS}/helper.sh
 
-if ! grep -w "${EXPERIMENTO}" ini*.sh |grep " EXPERIMENTO=" ; then
-	echo ERROR : current dir does not contain an init file for experiment ${EXPERIMENTO}
+if ! grep -w "${EXPERIMENT}" ini*.sh |grep " EXPERIMENT=" ; then
+	echo ERROR : current dir does not contain an init file for experiment ${EXPERIMENT}
 	exit 2
 fi
 
@@ -64,38 +53,23 @@ fi
 
 let npac=1
 
-# aplicaciones que se usen (botwie, samtools, bwa, ...)
-#export GENOMA_REFERENCIA=/mnt/home/soft/human/data/hg38/hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips
-#export ORIGEN_DATOS=/mnt/scratch/users/pab_001_uma/macarroyo/EGA/datos_originales/descomprimidos/
-#export ORIGEN_DATOS=/mnt/scratch/users/pab_001_uma/macarroyo/EGA/rna/
 pushd .
 
-cabeceras=`head -1 $INPUTFILE|tr -s "\t" " "|sed 's/[ \t]*$//'|tr -s " " "_"`
 let index=1
 for i in `head -1 $INPUTFILE` ; do 
   arr[${index}]=$i
   let index=${index}+1
 done
 
-# echo ${arr[1]} ${arr[2]}
-# num de elementos del array
-# echo ${#arr[@]}
-# todos los elementos
-# echo ${arr[@]}
+script_list=`cd ${JOB_SOURCE};ls $FILTER_SCRIPTS|sort -n`
 
+PROCESS_LINE_JOBS=`echo $script_list|grep $PROCESS_LINE`
 
-
-lista_scripts=`cd ${JOB_SOURCE};ls $FILTER_SCRIPTS|sort -n`
-
-PROCESS_LINE_JOBS=`echo $lista_scripts|grep $PROCESS_LINE`
-
-for job in $lista_scripts ; do
+for job in $script_list ; do
   # checks if this script process all the line at the same time
   if echo $job| grep $PROCESS_LINE > /dev/null ; then
- #   for i in `cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//'|tr -s " " "·"`; do
-cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//' | while read i2 ; do 
+   cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//' | while read i2 ; do 
       let index=1
-#echo leido $i2 del file input
       for sam in `echo $i2|tr "·" " "` ; do
         sample[${index}]=$sam
         let index=${index}+1
@@ -120,7 +94,7 @@ cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//' | while read i2 ; do
       chmod +x ${job}
       let npac=${npac}+1
       popd > /dev/null
-    done
+   done
   # checks if this script process all the data at the same time, so it needs the output of all previous jobs
   elif echo $job| grep $SYNC_JOB > /dev/null ; then
     pushd . > /dev/null
@@ -134,11 +108,8 @@ cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//' | while read i2 ; do
     chmod +x ${job}
     let npac=${npac}+1
     popd > /dev/null
-#    if ! test -z "$PROCESS_LINE_JOBS" ; then 
-#        comparative_dirs=`cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//'|tr " " "-"`
-#    fi
-# cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//' | tr -s " " "-"|grep -| while read i2 ; do
-if echo $lista_scripts | grep PROCESS_LINE; then
+
+if echo $script_list | grep PROCESS_LINE; then
 while read i2 ; do
       export tmp=`echo $i2|tr -s "\t" " "|sed 's/[ \t]*$//'|tr " " "-"`
       export i=`echo ${tmp}_${PROCESS_LINE}`
@@ -157,7 +128,7 @@ fi
       grep CHECK ${REAL_JOB_SOURCE}/$job >> ${job}
       popd > /dev/null
     done
-  else
+else
     for i in `cat $INPUTFILE|tr -s "\t" " "|sed 's/[ \t]*$//'|tail -n +2`; do
       pushd . > /dev/null
       mkdir $i > /dev/null 2> /dev/null
@@ -177,16 +148,9 @@ fi
       let npac=${npac}+1
       popd > /dev/null
     done
-  fi
+fi
 
 done
 
 popd
 echo `date` $npac files created >> $LOG
-
-#export DEPENDS=`cat espera_todo.lis| awk '{print substr($0,1,length($0)-1)}'`
-#export job_une=`${JOB_SOURCE}/envia.sh ${JOB_SOURCE}/5_unir_VCF.sh`
-#chequea $job_une 5_unir_VCF.sh
-
-
-
