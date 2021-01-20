@@ -84,7 +84,7 @@ for job in $script_list ; do
       export DEPEND=""
       export orden_act=`echo $job|tr "_" " "|awk '{print $1}'`
       export suborden_act=`echo $job|tr "_" " "|awk '{print $2}'`
-      cat ${REAL_JOB_SOURCE}/$job | sed s#SAMPLE#${i}#g |sed s#GENOMA_REFERENCIA#$GENOMA_REFERENCIA#g |sed s#ORIGEN_DATOS#${ORIGEN_DATOS}#g|sed s#TEMPORAL_DIR#${TEMPORAL_DIR}#g > ${job}
+      cat ${REAL_JOB_SOURCE}/$job | sed s#SAMPLE#${i}#g |sed s#REFERENCE_GENOME#$REFERENCE_GENOME#g |sed s#DATA_ORIGIN#${DATA_ORIGIN}#g|sed s#TEMPORAL_DIR#${TEMPORAL_DIR}#g > ${job}
       # changes the strings that are the names of the columns of the input file for their samples
       for idx in `seq 1 ${#arr[@]}` ; do
         sed -i s#${arr[${idx}]}#${sample[${idx}]}#g ${job}
@@ -101,7 +101,7 @@ for job in $script_list ; do
     i=`echo $job|sed s/.sh//`
     mkdir $i > /dev/null 2> /dev/null
     cd $i
-    cat ${REAL_JOB_SOURCE}/$job | sed s#SAMPLE#${i}#g |sed s#GENOMA_REFERENCIA#$GENOMA_REFERENCIA#g |sed s#ORIGEN_DATOS#${ORIGEN_DATOS}#g|sed s#TEMPORAL_DIR#${TEMPORAL_DIR}#g > ${job}
+    cat ${REAL_JOB_SOURCE}/$job | sed s#SAMPLE#${i}#g |sed s#REFERENCE_GENOME#$REFERENCE_GENOME#g |sed s#DATA_ORIGIN#${DATA_ORIGIN}#g|sed s#TEMPORAL_DIR#${TEMPORAL_DIR}#g > ${job}
 # TODO : fill  job so it processes all previous samples
     echo `date` sync job file for $job in $i created >> $LOG
     echo `date` sync job file for $job in $i created 
@@ -138,7 +138,7 @@ else
       export DEPEND=""
       export orden_act=`echo $job|tr "_" " "|awk '{print $1}'`
       export suborden_act=`echo $job|tr "_" " "|awk '{print $2}'`
-      cat ${REAL_JOB_SOURCE}/$job | sed s#SAMPLE#${i}#g |sed s#GENOMA_REFERENCIA#$GENOMA_REFERENCIA#g |sed s#ORIGEN_DATOS#${ORIGEN_DATOS}#g|sed s#TEMPORAL_DIR#${TEMPORAL_DIR}#g > ${job}
+      cat ${REAL_JOB_SOURCE}/$job | sed s#SAMPLE#${i}#g |sed s#REFERENCE_GENOME#$REFERENCE_GENOME#g |sed s#DATA_ORIGIN#${DATA_ORIGIN}#g|sed s#TEMPORAL_DIR#${TEMPORAL_DIR}#g > ${job}
       for idx in `seq 1 ${#arr[@]}` ; do
         sed -i s#${arr[${idx}]}#${sample[${idx}]}#g ${job}
       done
