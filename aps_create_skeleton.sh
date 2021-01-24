@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# This script will create a directory per sample in addition to other directories for unification phase.
+# Inside of that directories we will find other scripts needed for the program created by the templates
+# specified by the user in the JOB_SOURCE enviroment variable.
+
 export DIRS=`echo "${BASH_SOURCE%/*}/"`
 export LOG=$PWD/works.log
 export LOGERR=$PWD/works_trace.err
@@ -37,7 +41,6 @@ done
 
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
-
 
 . ${DIRS}/helper.sh
 
@@ -118,7 +121,6 @@ done < <(cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//' | tr -s " " 
 else
 unset l2
 fi
-
     for i in `cat $INPUTFILE|tr -s "\t" " "|sed 's/[ \t]*$//'|tail -n +2` $l2 ; do
       pushd . > /dev/null
       mkdir $i > /dev/null 2> /dev/null

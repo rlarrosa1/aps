@@ -4,23 +4,17 @@
 
 #export PATH=/mnt/home/soft/aps/programs/x86_64/bash_4.4/bin/:$PATH
 
-#if ! bash --version|grep "version 4" > /dev/null ; then
-#  echo Needs a bash version greater or equal to 4.
-#  exit 1
-#fi
 
 . helper.sh
 
 
 echo `date` Begin send_flow >> $LOG
-#echo `date` Begin send_all >> $LOGVER
 echo `date` Begin send_flow >> $LOGERR
 
 export orden="-"
 export suborden="-"
 
 export l1=`cat $INPUTFILE|tail -n +2`
-#export l2=`cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//'|grep " " |tr -s " " "-"|grep -`
 
 process_lines=`cd ${JOB_SOURCE};ls [1-9]*.sh|grep $PROCESS_LINE`
 if test -n "$process_lines" ; then 
@@ -29,10 +23,7 @@ else
   unset l2
 fi
 
-
-
 export l3=`cd ${JOB_SOURCE};ls $FILTER_SCRIPTS|grep $SYNC_JOB|sort -n| sed s#.sh##`
-
 
 function show_help
 {

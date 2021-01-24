@@ -1,7 +1,10 @@
-# variables globales
+# In this file are included validations. support functions and variables
+# declaration that the program needs
 
 export CACHE_SQUEUE_FILE=/tmp/squeue_cache.`whoami`.tmp
 export CACHE_SQUEUE_FILE_BN=`basename $CACHE_SQUEUE_FILE`
+
+# Validations of some needed variables before the probram starts
 
 if test "x$LOG" == "x" ; then
   export LOG=$PWD/works.log
@@ -183,27 +186,24 @@ function previous_step
 # tiene como entrada el numero del trabajo y el 2 el dir en el que esta, que
 # puede ser de los samples de los que depende separados por _, simplemente
 # el sample actual, o el nombre del script si es un sync_job
-function crea_dependencias 
+function create_dependencies 
 {
   unset ADD_DEPEND
   export actual=$1
   tmp=`pwd -P`
-  dir_base=`dirname $tmp`
+  base_dir=`dirname $tmp`
   echo checking $1 $2 $3 :  >> $LOG
   if ! (echo $2 |grep $SYNC_JOB > /dev/null ) && ! (echo $2 |grep $PROCESS_LINE > /dev/null ); then 
     echo no sync or line >> $LOG
     # if it is not a syncjob
     rm $CACHE_SQUEUE_FILE
-#    for sample in `echo $2|tr "_" " " ` ; do
-#      for jobs in `cache_squeue| grep $3| grep ^[1-9]| awk '$2<'$actual' {print $1}'`; do
       for jobs in `cache_squeue| grep ^[1-9]| awk '$2<'$actual' {print $1}'`; do
-	  camino=`scontrol show job $jobs |grep "Command="|grep ${tmp}`
-          echo to check $jobs in $camino >> $LOG
-	  if ! test -z "$camino" ; then
+	  way=`scontrol show job $jobs |grep "Command="|grep ${tmp}`
+          echo to check $jobs in $way >> $LOG
+	  if ! test -z "$way" ; then
 	    export ADD_DEPEND=`echo $ADD_DEPEND $jobs`
  	  fi
 	done
-#    done
     export ADD_DEPEND=`echo $ADD_DEPEND|tr " " "\n" |sort|uniq|tr "\n" " "`
     export ADD_DEPEND=`echo $ADD_DEPEND|xargs| tr " " ":"`
   else 
@@ -213,9 +213,9 @@ function crea_dependencias
     samples="`cat $INPUTFILE|tail -n +2` `cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//'|tr -s " " "-"|grep -` `echo $SYNC_JOB`"
     for sample in $samples ; do
     	for jobs in `cache_squeue| grep $sample| grep ^[1-9]|tr "_" " "|awk '$2=='$prev_orden' {print $1}'`; do
-	  camino=`scontrol show job $jobs |grep "Command="|grep $dir_base|grep $sample`
-	  if ! test -z "$camino" ; then
-  	    let name=`basename $camino|tr "_" " "| awk '{print $1}'`
+	  way=`scontrol show job $jobs |grep "Command="|grep $base_dir|grep $sample`
+	  if ! test -z "$way" ; then
+  	    let name=`basename $way|tr "_" " "| awk '{print $1}'`
 	    if test $name -eq $prev_orden ; then 
 		export ADD_DEPEND=`echo $jobs $ADD_DEPEND`
 	    fi
@@ -228,7 +228,7 @@ function crea_dependencias
   return 0
 }
 
-function trabajo_con_fichero_salida
+function output_file
 {
   check=`grep "#SBATCH --output" $2|sed "s/#SBATCH --output=//"|sed s/%J/*/`
   if ls $check > /dev/null 2>&1 ; then
@@ -240,7 +240,7 @@ function trabajo_con_fichero_salida
 }
 
 
-function trabajo_terminado_correctamente
+function work_done_successfully
 {
  if test -s ${2}.check ; then 
    ./${2}.check > /dev/null
@@ -250,36 +250,27 @@ function trabajo_terminado_correctamente
 # If there are " in check then we suposse that it is a command that needs a string as a first argument, like a grep
   if echo $check | grep "\"" > /dev/null ; then 
     cmd=`echo $check |awk  '{split($0,a,"\"");print a[1]}'`
-    cadena=`echo $check|awk  '{split($0,a,"\"");print a[2]}'`
+    chain=`echo $check|awk  '{split($0,a,"\"");print a[2]}'`
     outfiles=`echo $check|awk  '{split($0,a,"\"");print a[3]}'`
-#    echo 11job $1 $2, to check $cmd $cadena $outfiles 
-#    echo CMD: $cmd "${cadena}" $outfiles
-    if $cmd "${cadena}" $outfiles > /dev/null 2>&1 ; then
+    if $cmd "${chain}" $outfiles > /dev/null 2>&1 ; then
       return 0
-    else 
-    #echo no existe trabajo correcto de $1
+    else     
       return 1
     fi
   elif echo $check |grep find > /dev/null ; then
     cmd=`echo $check |awk  '{split($0,a," ");print a[1]}'`
     outfiles=`echo $check|awk  '{split($0,a," ");print a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9],a[10]}'`
-#    echo 1fjob $1 $2, to check $cmd $outfiles 
-#    echo CMD: $cmd $outfiles
     if test `$cmd $outfiles | wc -l` != 0  > /dev/null 2>&1 ; then
       return 0
-    else
-    #echo no existe trabajo correcto de $1
+    else    
       return 1
     fi
   else
     cmd=`echo $check |awk  '{split($0,a," ");print a[1]}'`
     outfiles=`echo $check|awk  '{split($0,a," ");print a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9],a[10]}'`
-#    echo 12job $1 $2, to check $cmd $outfiles 
-#    echo CMD: $cmd $outfiles
     if eval $cmd $outfiles > /dev/null 2>&1 ; then
       return 0
-    else
-    #echo no existe trabajo correcto de $1
+    else    
       return 1
     fi
   fi
