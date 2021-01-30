@@ -126,7 +126,7 @@ for i in $list_jobs ; do
         # si no existe mira si ya ha terminado correctamente
         else
           if (! work_done_successfully $ele $job > /dev/null ) ; then
-  	       trabajo_con_fichero_salida $ele $job 
+  	       output_file $ele $job 
             if ( test "x${OUTPUT_FILE}" == "x" ) || (test "x$FORCE" == "xtrue" ); then
 	           prev_step=`previous_step $job`
 	           if (echo ${job} |grep ${SYNC_JOB} > /dev/null ) ; then
