@@ -31,10 +31,6 @@ export VERBOSE=false
 export CHECK_AFTER_ERR=false
 export LOGERR="commands_to_clean_errors.txt"
 
-let nerrors=0
-let unexec=0
-let nchecks=0
-
 while getopts "h?vd:s:i:a" opt; do
     case "$opt" in
     h|\?)
@@ -62,9 +58,7 @@ shift $((OPTIND-1))
 
 echo `date` Begin check >> $LOGERR
 
-
-
-function trabajo_con_nombre
+function work_name
 {
   check=`grep "#SBATCH -J " $1|sed "s/#SBATCH -J //"`
   if echo $check | grep "^[1-9]" > /dev/null 2>&1 ; then
@@ -75,18 +69,18 @@ function trabajo_con_nombre
   return 1
 }
 
-lista_scripts=`cd ${JOB_SOURCE};ls $FILTER_SCRIPTS 2> /dev/null`
-lista_unify_scripts=`cd ${JOB_SOURCE};ls [1-9]*${SYNC_JOB}*sh 2> /dev/null`
+scripts_list=`cd ${JOB_SOURCE};ls $FILTER_SCRIPTS 2> /dev/null`
+unify_scripts_list=`cd ${JOB_SOURCE};ls [1-9]*${SYNC_JOB}*sh 2> /dev/null`
 
-if test `echo $lista_unify_scripts |wc -w` -gt 5 ; then 
+if test `echo $unify_scripts_list |wc -w` -gt 5 ; then 
   echo
   echo WARNING: there are more than five sync jobs \($SYNC_JOB\) are you sure ?
-  echo Probable the workflow can be made in another, better, way.
+  echo Probably the workflow can be made in another, better, way.
   echo 
-  echo Currently there are: $lista_unify_scripts
+  echo Currently there are: $unify_scripts_list
 fi
 
-if test `echo $lista_scripts |wc -w` -eq 0 ; then
+if test `echo $scripts_list |wc -w` -eq 0 ; then
   echo
   echo ERROR: there are no jobs in the dir \${JOB_SOURCE} :
   echo ${JOB_SOURCE}
@@ -109,55 +103,47 @@ if test $rep_out != 1 ; then
   exit 1
 fi
 
-PROCESS_LINE_JOBS=`echo $lista_scripts|grep "$PROCESS_LINE"`
+PROCESS_LINE_JOBS=`echo $scripts_list|grep "$PROCESS_LINE"`
 
 greatest_size_job=5
 greatest_size_job_name=""
 
-for job in $lista_scripts ; do
+for job in $scripts_list ; do
   # checks if this script process all the line at the same time
-#  if echo $job| grep $PROCESS_LINE > /dev/null ; then
- #   for i in `cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//'|tr -s " " "·"`; do
-      let index=1
-#echo leido $i2 del file input
-      for sam in `echo $i2|tr "·" " "` ; do
-        sample[${index}]=$sam
-        let index=${index}+1
-      done
-      trabajo_con_nombre ${JOB_SOURCE}/$job
-      if ! echo ${job:0:1}| grep "[1-9]" > /dev/null ; then 
-           echo Problem in job $job :
-	   echo The job name should begin with a number that indicates its place in the flow. 
-	   echo
-	   echo For example, in this case, inside the script $job
-	   echo  it should say:
-	   echo \#SBATCH -J $job
-	   echo
-	   $exit 1
-      fi
-      if ! test "${job:0:1}" -eq "${JOB_NAME:0:1}" ; then 
-           echo Problem in job $job :
-           echo 
-	   if ! test -z "$JOB_NAME" ; then 
-		echo The job name is $JOB_NAME
-	   fi
-	   echo  It should begin with the same number that the job inside the flow.
-	   echo 
-	   echo For example, in this case, inside the script $job
-	   echo  it should say:
-	   echo \#SBATCH -J $job
-	   echo
-	   exit 1
-      fi
-      if test `echo $JOB_NAME|wc -c` -gt $greatest_size_job && ! echo $JOB_NAME|grep $SYNC_JOB > /dev/null ; then 
-           greatest_size_job=`echo $JOB_NAME|wc -c` 
-           greatest_size_name=$JOB_NAME
-      fi
-#      if ! echo $job|grep $SYNC_JOB && echo $JOB_NAME |grep SAMPLE ; then
-#	echo Problem in job $job :
-#	echo Job name should include SAMPLE, so it contains the concrete sample to be used.
-#	exit 1
-#      fi
+  let index=1
+  for sam in `echo $i2|tr "·" " "` ; do
+    sample[${index}]=$sam
+    let index=${index}+1
+  done
+  work_name ${JOB_SOURCE}/$job
+  if ! echo ${job:0:1}| grep "[1-9]" > /dev/null ; then 
+    echo Problem in job $job :
+	  echo The job name should begin with a number that indicates its place in the flow. 
+	  echo
+	  echo For example, in this case, inside the script $job
+	  echo  it should say:
+	  echo \#SBATCH -J $job
+	  echo
+	  $exit 1
+  fi
+   if ! test "${job:0:1}" -eq "${JOB_NAME:0:1}" ; then 
+    echo Problem in job $job :
+    echo 
+	  if ! test -z "$JOB_NAME" ; then 
+	  	echo The job name is $JOB_NAME
+	  fi
+	  echo  It should begin with the same number that the job inside the flow.
+	  echo 
+	  echo For example, in this case, inside the script $job
+	  echo  it should say:
+	  echo \#SBATCH -J $job
+	  echo
+	  exit 1
+   fi
+  if test `echo $JOB_NAME|wc -c` -gt $greatest_size_job && ! echo $JOB_NAME|grep $SYNC_JOB > /dev/null ; then 
+    greatest_size_job=`echo $JOB_NAME|wc -c` 
+    greatest_size_name=$JOB_NAME
+  fi
 done
 
 
@@ -169,7 +155,7 @@ lines=`cat $INPUTFILE|tail -n +2|uniq|wc -l`
 if ( test $merge_lines -ne $lines ) ; then 
    echo There is a problem in the input file $INPUTFILE with the lines.
    echo For example, some lines are repeated.
-   echo lines counted in total: $lines, sorted and merged : $merge_lines
+   echo Lines counted in total: $lines, sorted and merged : $merge_lines
    exit 1 
 fi
 
@@ -180,7 +166,7 @@ let index=index+1
 samples_in_line=`echo $i2 |wc -w` 
 if test $samples_in_line -ne $conditions ; then 
   echo In input file: $INPUTFILE
-  echo there is an incorrect number of samples in line $index
+  echo There is an incorrect number of samples in line $index
   echo The conditions are: 
   head -1 $INPUTFILE
   echo 

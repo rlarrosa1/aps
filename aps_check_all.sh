@@ -75,8 +75,8 @@ for i in $l1 $l2 $l3 ; do
     # no existe el directorio
     continue
   fi
-  lista_scripts=`ls $FILTER_SCRIPTS 2>/dev/null`
-  for job in $lista_scripts ; do
+  scripts_list=`ls $FILTER_SCRIPTS 2>/dev/null`
+  for job in $scripts_list ; do
     let nchecks=${nchecks}+1
 #echo to test en $i el job $job
     if grep \#SBATCH $job > /dev/null ; then
@@ -86,9 +86,9 @@ for i in $l1 $l2 $l3 ; do
         echo `date` job $job from sample $i is in the queue system, with id: $ADD_DEPEND.
 # si no existe mira si ya ha terminado correctamente
       else
-        if trabajo_terminado_correctamente $i $job ; then
+        if work_done_successfully $i $job ; then
           if test $VERBOSE == "true" ; then
-            echo `date` job $job from sample $i has finished correctly
+            echo `date` Job $job from sample $i has finished correctly
 	  fi
 	  if test $INFO == "true" ; then
             if test -f ${REAL_JOB_SOURCE}/${job}.get_info ; then 
@@ -97,8 +97,8 @@ for i in $l1 $l2 $l3 ; do
           fi
         else
 #  if ! trabajo_con_fichero_salida $i $job > /dev/null ; then
-          if ! trabajo_con_fichero_salida $i $job ; then
-                echo `date` job $job from sample $i never has been run, no output file exists.
+          if ! output_file $i $job ; then
+                echo `date` Job $job from sample $i never has been run, no output file exists.
     		let unexec=${unexec}+1
           else
             echo rm ${i}/${OUTPUT_FILE} >> ../${CLEAN_ERRS}
