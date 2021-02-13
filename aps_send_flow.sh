@@ -10,8 +10,8 @@
 echo `date` Begin send_flow >> $LOG
 echo `date` Begin send_flow >> $LOGERR
 
-export orden="-"
-export suborden="-"
+export order="-"
+export suborder="-"
 
 export l1=`cat $INPUTFILE|tail -n +2`
 

@@ -2,13 +2,12 @@
 
 . helper.sh
 
-
 export l1=`cat $INPUTFILE|tail -n +2`
-#export l2=`cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//'|grep " " |tr -s " " "-"|grep -`
+
 while read i2 ; do
-      export tmp=`echo $i2|tr -s "\t" " "|sed 's/[ \t]*$//'|tr " " "-"`
-      export i=`echo ${tmp}_${PROCESS_LINE}`
-      export l2=`echo $l2 $i`
+  export tmp=`echo $i2|tr -s "\t" " "|sed 's/[ \t]*$//'|tr " " "-"`
+  export i=`echo ${tmp}_${PROCESS_LINE}`
+  export l2=`echo $l2 $i`
 done < <(cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//' | tr -s " " "-"|grep - )
 
 
@@ -18,7 +17,7 @@ function show_help
 	echo "-d dir 		only check directory dir."
 	echo "-s script 	only check script."
 	echo "-i suffix  	writes information about the jobs, one file per script, using scriptname with suffix as the filename."
-        echo "			It uses the *.get_info scripts to extract the info."
+  echo "			It uses the *.get_info scripts to extract the info."
 	echo "-a 		check all scripts in case of error, doesn't stops at the first error of a sample."
 }
 
