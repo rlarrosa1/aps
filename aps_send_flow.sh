@@ -2,7 +2,8 @@
 
 # !/usr/bin/env bash
 
-# This script will send the created jobs to the queue system(Slurm).
+# This script sends the created jobs to the queue system(Slurm). Before that it checks if the job is already in the queue system or
+# it has been completed successfully. You can select between send all the jobs or select a gruop of them.
 
 . helper.sh
 
@@ -41,6 +42,8 @@ export CHECK_AFTER_ERR=false
 export ACT_DIR=`pwd`
 export LOGERR=`echo ${ACT_DIR}/error_sending.txt`
 
+# Variables used to count the jobs that would be processed
+
 let jobs_sent=0
 let jobs_finished=0
 let jobs_queued=0
@@ -48,6 +51,8 @@ let jobs_queued=0
 let jobs_sent_total=0
 let jobs_finished_total=0
 let jobs_queued_total=0
+
+# This loop will read the input parameters in the screen and it will perform the right acction depending on the parameters
 
 while getopts "h?vd:s:i:a" opt; do
     case "$opt" in
@@ -80,6 +85,8 @@ fi
 list_jobs=`find ${JOB_SOURCE} -iname ${FILTER_SCRIPTS} -exec basename {} \; |grep ^[1-9]| sort -n|awk -F_  '{print $1}'|uniq`
 list_jobs_check=`find ${JOB_SOURCE} -iname ${FILTER_SCRIPTS} -exec basename {} \; |sort -n|awk -F_  '{print $1}'|uniq`
 first_dir=`echo $l1|awk '{print $1}'`
+
+# In the next validations we will control if there are jobs to process
 
 if ! test -d "${first_dir}" ; then
   echo There seems to be no jobs. Before sending jobs the flow must be created using :
@@ -114,16 +121,15 @@ for i in $list_jobs ; do
     if ! cd ${ele} 2> /dev/null ; then 
       continue
     fi
-    let idx=1
-    # en el dir $ele lanza todos los que toquen
+    let idx=1    
     for job in `ls ${FILTER_SCRIPTS}|grep ^${i}_`  ; do
       if grep "#SBATCH" $job > /dev/null ; then
-      # primero mira si ya existe en el sistema de colas
+        # The process checks if the jobs exits in the queue system
         if work_exists $ele `echo $job|sed s/.sh//`  ; then
   	    DEPENDarr[${ele},${i}]=`echo ${DEPENDarr[${ele},${i}]} "${ADD_DEPEND}"`
 	      let jobs_queued=$jobs_queued+1
-        #     echo job $job exists DEPEND= ${ADD_DEPEND} $DEPENDarr[$idx]
-        # si no existe mira si ya ha terminado correctamente
+        # In case the jobs does not exist in the queue system, then 
+        # we check if the job have finished successfully
         else
           if (! work_done_successfully $ele $job > /dev/null ) ; then
   	       output_file $ele $job 
@@ -131,8 +137,7 @@ for i in $list_jobs ; do
 	           prev_step=`previous_step $job`
 	           if (echo ${job} |grep ${SYNC_JOB} > /dev/null ) ; then
 		          DEPEND=`echo ${DEPENDtouse[@]}`
-	           elif (echo ${job} |grep ${PROCESS_LINE} > /dev/null ) ; then
-	# por ahora dependen de todos 
+	           elif (echo ${job} |grep ${PROCESS_LINE} > /dev/null ) ; then	            
 	          	DEPEND=`echo ${DEPENDtouse[@]}`
 	           else
 		          DEPEND=${DEPENDtouse[${ele},${prev_step}]}
@@ -143,6 +148,7 @@ for i in $list_jobs ; do
 		           fi
 		          done
  	          fi
+           # If there is a dependencie between jobs we will create it
 	         DEPEND=`echo $DEPEND|tr " " ":"`
             if test -z "$DEPEND" && ( test "$i" -gt 1 ) ; then 
               echo ----- Creating dependencies job: $job i: $i >> $LOG

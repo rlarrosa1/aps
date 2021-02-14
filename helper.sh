@@ -4,15 +4,21 @@
 export CACHE_SQUEUE_FILE=/tmp/squeue_cache.`whoami`.tmp
 export CACHE_SQUEUE_FILE_BN=`basename $CACHE_SQUEUE_FILE`
 
-# Validations of some needed variables before the probram starts
+# Validations of some needed variables before the process starts
+
+# Checking variable $LOG
 
 if test "x$LOG" == "x" ; then
   export LOG=$PWD/works.log
 fi
 
+# Checking variable $LOGGER
+
 if test "x$LOGERR" == "x" ; then
   export LOGERR=$PWD/works_trace.err
 fi
+
+# Checking variable $JOB_SOURCE
 
 if test "x$JOB_SOURCE" == "x" ; then
   echo Error: path of work files must be specified in env var JOB_SOURCE
@@ -26,22 +32,29 @@ else if test "${JOB_SOURCE:0:1}" != "/" && test "${JOB_SOURCE:0:1}" != "~" ; the
    fi
 fi
 
+# Checking variable $EXPERIMENT
+
 if test -z "$EXPERIMENT" ; then
 	echo ERROR: environment variable EXPERIMENT not defined.
 	echo It should be defined inside an ini*.sh file.
 	exit 2
 fi
 
+# Checking if the init file exists for the current experiment
 
 if ! grep -v \# ini*.sh| grep ${EXPERIMENT} > /dev/null; then
         echo ERROR : current directory does not contain an init file for experiment ${EXPERIMENT}
         exit 2
 fi
 
+# Checking variable $REFERENCE_GENOME, if not this variable will take the default value
+
 if test "x$REFERENCE_GENOME" == "x" ; then
   export REFERENCE_GENOME=/mnt/home/soft/human/data/hg38/hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips
   echo Warning: Path to reference genome not defined, defaults to $REFERENCE_GENOME
 fi
+
+# Checking variable $DATA_ORIGIN
 
 if test "x$DATA_ORIGIN" == "x" ; then
   echo Error: path of data files must be specified in env var DATA_ORIGIN
@@ -50,15 +63,18 @@ if test "x$DATA_ORIGIN" == "x" ; then
   exit 3
 fi 
 
-# palabra clave que se usa para saber cuando un script va a usar varias muestras.
-#  Se creará un directorio nuevo para las comparaciones.
+# Checking variable $PROCESS_LINE. This variable is used to know when a script is going to use
+# more than one sample. If we need to compare samples a new directory will be created where
+# the comparations will be allocated. In no value has been specified for this variable it will
+# take the default value as 'compare'.
+
 if test "x$PROCESS_LINE" == "x" ; then
   export PROCESS_LINE=compare
 fi
-# dentro se usarán SAMPLE_NORMAL y SAMPLE_CANCER
 
 # jobs that contain this string make a "sync" job, so it uses data from all jobs until now
 # They are contained in a dir called with their name minus .sh
+
 if test "x$SYNC_JOB" == "x" ; then
   export SYNC_JOB=unify
 fi
@@ -69,6 +85,9 @@ export DIR_PREFIX=SAMPLE_
 # se le pasa el script a ejecutar y devuelve el Job ID, si no estaba en ejecución.
 # $1 es el fichero a ejecutar
 # $2 el sample id sobre el que se va a ejecutar
+
+# Checking variable $INPUTFILE. We check that the file exists and it is a text file. 
+# Apart of that we check if it has content.
 
 if test "x$INPUTFILE" == "x" ; then   
   echo Error: path of file that contains sample info must be specified in environment variable INPUTFILE
@@ -93,6 +112,8 @@ then
   exit 4
 fi
 
+# This function will show the jobs of the chosen user in the system queue
+
 function cache_squeue
 {
    if ! test -s  ${CACHE_SQUEUE_FILE} || find /tmp/ -maxdepth 1 -iname $CACHE_SQUEUE_FILE_BN -mmin +1 |grep $CACHE_SQUEUE_FILE_BN 2> /dev/null ; then
@@ -101,6 +122,8 @@ function cache_squeue
    fi
    cat $CACHE_SQUEUE_FILE
 }
+
+# The next function will display the job information and save it in a tmp file. The input is the job id.
 
 function cache_scontrol
 {
@@ -146,8 +169,8 @@ function check_sending
   fi
 }
 
-
-# arguments must be: 1st. directory and 2nd. filename of job without sh
+# The next function will check if the requested job exists in the queue system.
+# Arguments must be: 1st. directory and 2nd. filename of job without sh
 function work_exists
 {
   if ! echo $2 |grep $SYNC_JOB > /dev/null ; then
@@ -166,9 +189,9 @@ function work_exists
     partial_dir=`pwd -P|awk -F / '{$NF=""; print $0}'|tr " " "/"`
     for j in `cache_squeue| grep ^[1-9]| awk '{print $1}'`; do
       if  scontrol show job $j |grep ${partial_dir}|grep $2 > /dev/null ; then
-	  echo Job exists: $j exits in ${partial_dir} for $2 sample >> $LOG
-          export ADD_DEPEND=${j}
-          return 0
+	     echo Job exists: $j exists in ${partial_dir} for $2 sample >> $LOG
+       export ADD_DEPEND=${j}
+       return 0
       fi
     done
   fi
