@@ -82,10 +82,6 @@ fi
 # directories prefix
 export DIR_PREFIX=SAMPLE_
 
-# se le pasa el script a ejecutar y devuelve el Job ID, si no estaba en ejecución.
-# $1 es el fichero a ejecutar
-# $2 el sample id sobre el que se va a ejecutar
-
 # Checking variable $INPUTFILE. We check that the file exists and it is a text file. 
 # Apart of that we check if it has content.
 
@@ -136,6 +132,9 @@ function cache_scontrol
   cat /tmp/sacuigscdsa43_cache/$jid.bor
 }
 
+# The next function check the dependecie of the job and if it is already running in the system
+# scontrol is a SLURM fuction which shows job information.
+
 function send
 {
 	unset dependence
@@ -171,6 +170,7 @@ function check_sending
 
 # The next function will check if the requested job exists in the queue system.
 # Arguments must be: 1st. directory and 2nd. filename of job without sh
+
 function work_exists
 {
   if ! echo $2 |grep $SYNC_JOB > /dev/null ; then
@@ -182,10 +182,10 @@ function work_exists
       fi
     done
   else 
+    # Uses all path except the last dir, so it recognices the sync job from all the samples.
+    # This way the sync job matchs in all samples, and they can recognice one job as theirs, so 
+    # they depend on it
     export ADD_DEPEND=""
-# uses all path except the last dir, so it recognices the sync job from all the samples
-# This way the sync job matchs in all samples, and they can recognice one job as theirs, so 
-# they depend on it
     partial_dir=`pwd -P|awk -F / '{$NF=""; print $0}'|tr " " "/"`
     for j in `cache_squeue| grep ^[1-9]| awk '{print $1}'`; do
       if  scontrol show job $j |grep ${partial_dir}|grep $2 > /dev/null ; then
@@ -199,6 +199,7 @@ function work_exists
 }
 
 # A number indicting a step and all jobs are passed, and returns the previous step.
+
 function previous_step
 {
   actual=`echo $1|awk -F_ '{print $1}'`
@@ -206,9 +207,9 @@ function previous_step
   echo $prev
 }
 
-# tiene como entrada el numero del trabajo y el 2 el dir en el que esta, que
-# puede ser de los samples de los que depende separados por _, simplemente
-# el sample actual, o el nombre del script si es un sync_job
+# The next function creates the dependencies between jobs. Input data are job id as first parameter,
+# and job´s directory as second parameter. It can be whatever sample type.
+
 function create_dependencies 
 {
   unset ADD_DEPEND
@@ -217,36 +218,35 @@ function create_dependencies
   base_dir=`dirname $tmp`
   echo checking $1 $2 $3 :  >> $LOG
   if ! (echo $2 |grep $SYNC_JOB > /dev/null ) && ! (echo $2 |grep $PROCESS_LINE > /dev/null ); then 
-    echo no sync or line >> $LOG
-    # if it is not a syncjob
-    rm $CACHE_SQUEUE_FILE
-      for jobs in `cache_squeue| grep ^[1-9]| awk '$2<'$actual' {print $1}'`; do
+   echo no sync or line >> $LOG   
+   rm $CACHE_SQUEUE_FILE
+   for jobs in `cache_squeue| grep ^[1-9]| awk '$2<'$actual' {print $1}'`; do
 	  way=`scontrol show job $jobs |grep "Command="|grep ${tmp}`
-          echo to check $jobs in $way >> $LOG
+    echo to check $jobs in $way >> $LOG
 	  if ! test -z "$way" ; then
 	    export ADD_DEPEND=`echo $ADD_DEPEND $jobs`
  	  fi
-	done
-    export ADD_DEPEND=`echo $ADD_DEPEND|tr " " "\n" |sort|uniq|tr "\n" " "`
-    export ADD_DEPEND=`echo $ADD_DEPEND|xargs| tr " " ":"`
+   done
+   export ADD_DEPEND=`echo $ADD_DEPEND|tr " " "\n" |sort|uniq|tr "\n" " "`
+   export ADD_DEPEND=`echo $ADD_DEPEND|xargs| tr " " ":"`
   else 
-    # if it is a syncjob it depends upon all previous jobs
-    let prev=${actual}-1
-    prev_orden=`previous_step $actual`
-    samples="`cat $INPUTFILE|tail -n +2` `cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//'|tr -s " " "-"|grep -` `echo $SYNC_JOB`"
-    for sample in $samples ; do
-    	for jobs in `cache_squeue| grep $sample| grep ^[1-9]|tr "_" " "|awk '$2=='$prev_orden' {print $1}'`; do
+   # if it is a sync job it depends upon all previous jobs
+   let prev=${actual}-1
+   prev_orden=`previous_step $actual`
+   samples="`cat $INPUTFILE|tail -n +2` `cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//'|tr -s " " "-"|grep -` `echo $SYNC_JOB`"
+   for sample in $samples ; do
+    for jobs in `cache_squeue| grep $sample| grep ^[1-9]|tr "_" " "|awk '$2=='$prev_orden' {print $1}'`; do
 	  way=`scontrol show job $jobs |grep "Command="|grep $base_dir|grep $sample`
 	  if ! test -z "$way" ; then
-  	    let name=`basename $way|tr "_" " "| awk '{print $1}'`
-	    if test $name -eq $prev_orden ; then 
-		export ADD_DEPEND=`echo $jobs $ADD_DEPEND`
-	    fi
+  	 let name=`basename $way|tr "_" " "| awk '{print $1}'`
+	   if test $name -eq $prev_orden ; then 
+		  export ADD_DEPEND=`echo $jobs $ADD_DEPEND`
+	   fi
 	  fi
-	done
-    done
-    export ADD_DEPEND=`echo $ADD_DEPEND|tr " " "\n" |sort|uniq|tr "\n" " "`
-    export ADD_DEPEND=`echo $ADD_DEPEND|xargs| tr " " ":"`
+	  done
+   done
+   export ADD_DEPEND=`echo $ADD_DEPEND|tr " " "\n" |sort|uniq|tr "\n" " "`
+   export ADD_DEPEND=`echo $ADD_DEPEND|xargs| tr " " ":"`
   fi
   return 0
 }
@@ -262,41 +262,42 @@ function output_file
   return 1
 }
 
+# The next funcion checks if the job has been successfully processed.
 
 function work_done_successfully
 {
- if test -s ${2}.check ; then 
-   ./${2}.check > /dev/null
-   return $?
+if test -s ${2}.check ; then 
+ ./${2}.check > /dev/null
+ return $?
  else
-  check=`grep ^#CHECK $2|sed "s/#CHECK //"`
-# If there are " in check then we suposse that it is a command that needs a string as a first argument, like a grep
-  if echo $check | grep "\"" > /dev/null ; then 
-    cmd=`echo $check |awk  '{split($0,a,"\"");print a[1]}'`
-    chain=`echo $check|awk  '{split($0,a,"\"");print a[2]}'`
-    outfiles=`echo $check|awk  '{split($0,a,"\"");print a[3]}'`
-    if $cmd "${chain}" $outfiles > /dev/null 2>&1 ; then
-      return 0
-    else     
-      return 1
-    fi
-  elif echo $check |grep find > /dev/null ; then
-    cmd=`echo $check |awk  '{split($0,a," ");print a[1]}'`
-    outfiles=`echo $check|awk  '{split($0,a," ");print a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9],a[10]}'`
-    if test `$cmd $outfiles | wc -l` != 0  > /dev/null 2>&1 ; then
-      return 0
-    else    
-      return 1
-    fi
-  else
-    cmd=`echo $check |awk  '{split($0,a," ");print a[1]}'`
-    outfiles=`echo $check|awk  '{split($0,a," ");print a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9],a[10]}'`
-    if eval $cmd $outfiles > /dev/null 2>&1 ; then
-      return 0
-    else    
-      return 1
-    fi
+ check=`grep ^#CHECK $2|sed "s/#CHECK //"`
+ # If there are " in check then we suposse that it is a command that needs a string as a first argument, like a grep
+ if echo $check | grep "\"" > /dev/null ; then 
+  cmd=`echo $check |awk  '{split($0,a,"\"");print a[1]}'`
+  chain=`echo $check|awk  '{split($0,a,"\"");print a[2]}'`
+  outfiles=`echo $check|awk  '{split($0,a,"\"");print a[3]}'`
+  if $cmd "${chain}" $outfiles > /dev/null 2>&1 ; then
+   return 0
+   else     
+    return 1
+  fi
+ elif echo $check |grep find > /dev/null ; then
+  cmd=`echo $check |awk  '{split($0,a," ");print a[1]}'`
+  outfiles=`echo $check|awk  '{split($0,a," ");print a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9],a[10]}'`
+  if test `$cmd $outfiles | wc -l` != 0  > /dev/null 2>&1 ; then
+   return 0
+  else    
+   return 1
+  fi
+ else
+  cmd=`echo $check |awk  '{split($0,a," ");print a[1]}'`
+  outfiles=`echo $check|awk  '{split($0,a," ");print a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9],a[10]}'`
+  if eval $cmd $outfiles > /dev/null 2>&1 ; then
+   return 0
+  else    
+   return 1
   fi
  fi
+fi
 }
 
