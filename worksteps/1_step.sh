@@ -12,15 +12,15 @@
 #--time=10:00
 
 # To use GPUs you have to request them:
-##SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=52
 
 # If you need nodes with special features uncomment the desired constraint line: 
-#SBATCH --constraint=cal
+#SBATCH --constraint=sd
 
 # Set output and error files 
 #SBATCH --error=job.step1.SAMPLE.%J.err 
 #SBATCH --output=job.step1.SAMPLE.%J.out
-#CHECK ls TEMPORAL_DIR/SAMPLE_st/output_files/*.fastq* 
+ 
 #CHECK grep "exit 0" job.step1.SAMPLE.*.out
 
 let j=$RANDOM%200

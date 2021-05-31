@@ -13,27 +13,27 @@
 #SBATCH --time=10:00
 
 #To use GPUs you have to request them:
-##SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=52
 
 
 #If you need nodes with special features uncomment the desired constraint line: 
-#SBATCH --constraint=cal
+#SBATCH --constraint=sd
 
 
 #Set output and error files 
 #SBATCH --error=job.step4.SAMPLE.%J.err 
 #SBATCH --output=job.step4.SAMPLE.%J.out
-#CHECK ls TEMPORAL_DIR/SAMPLE_st/output_files/*.fastq* 
+ 
 #CHECK grep "exit 0" job.step4.*.out
 
 
 let j=$RANDOM%100 
 echo sleeping for $j seconds 
 sleep $j 
-step3=`grep sum job*step3*out |awk '{print $2}'` 
+step3=`grep sum ../3_unify_step/job*unify*out |awk '{print $2}'` 
 echo step 4 for SAMPLE step 3 outcome: $step3 
 sub=`echo SAMPLE-${step3}|bc -l` 
 echo subtraction SAMPLE $sub 
 date 
-echo res 0 
+echo exit 0 
 #echo `date` init $0 >> $LOG
