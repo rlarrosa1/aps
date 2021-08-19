@@ -1,6 +1,4 @@
-#!/mnt/home/soft/aps/programs/x86_64/bash_4.4/bin/bash
-
-# !/usr/bin/env bash
+#!/usr/bin/env bash
 
 # This script sends the created jobs to the queue system(Slurm). Before that it checks if the job is already in the queue system or
 # it has been completed successfully. You can select between send all the jobs or select a gruop of them.

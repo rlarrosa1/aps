@@ -111,7 +111,8 @@ for i in $l1 $l2 $l3 ; do
    if ! output_file $i $job ; then
     echo `date` Job $job from sample $i never has been run, no output file exists.
     let unexec=${unexec}+1
-   else
+   elif [ -s $OUTPUT_FILE ]
+   then
     echo rm ${i}/${OUTPUT_FILE} >> ../${CLEAN_ERRS}
     echo rm ${i}/${OUTPUT_FILE}|sed s/.out/.err/ >> ../${CLEAN_ERRS}
     echo `date` job $job from sample $i has finished with errors, outputfile: $OUTPUT_FILE
