@@ -28,10 +28,14 @@ unset CHECK
 export FILTER_SCRIPTS="[1-9]*.sh*"
 export INFO=false
 export VERBOSE=false
+export MEASURE=false
+export NUM_CPU=0
+export NUM_TASK=0
+export NUM_MEM=0
 
 # This loop will read the input parameters in the screen and it will perform the right acction depending on the parameters
 
-while getopts "h?vd:s:i:" opt; do
+while getopts "h?vd:s:i:o:c:t:m:" opt; do
     case "$opt" in
     h|\?)
         show_help
@@ -42,8 +46,15 @@ while getopts "h?vd:s:i:" opt; do
     d)  l1=$OPTARG
         unset l2
         ;;
+    o)  MEASURE=true
+        ;;
     s)  FILTER_SCRIPTS=$OPTARG
         ;;
+    c)  NUM_CPU=$OPTARG
+        ;;
+    t)  NUM_TASK=$OPTARG
+        ;;
+    m)  NUM_MEM=$OPTARG
     esac
 done
 
@@ -62,11 +73,18 @@ if ! grep -w "${EXPERIMENT}" ini*.sh |grep " EXPERIMENT=" ; then
 	exit 2
 fi
 
-# aps_flo_check.sh is other script which will do some validations and, in case of error, a message will appear in the terminal with
+# aps_flow_check.sh is other script which will do some validations and, in case of error, a message will appear in the terminal with
 # the details and the process will end.
 
 if ! aps_flow_check.sh ; then 
   echo Please, correct the errors before creating the flow files.
+  exit 1
+fi
+
+# If optimization option has been selected it is needed to validate the input parameters
+
+if [ $MEASURE == "true" ] && [[ $NUM_CPU -eq 0 && $NUM_TASK -eq 0 && $NUM_MEM -eq 0 ]] ; then
+  echo Please, if you are going to use optimization option ensure that the parameters are correct.
   exit 1
 fi
 
@@ -93,6 +111,7 @@ PROCESS_LINE_JOBS=`echo $script_list|grep $PROCESS_LINE`
 for job in $script_list ; do
   # checks if this script process all the line at the same time
   if echo $job| grep $PROCESS_LINE > /dev/null ; then
+    if ! [ $MEASURE == "true" ] ; then
     cat $INPUTFILE|tail -n +2|tr -s "\t" " "|sed 's/[ \t]*$//' | while read i2 ; do 
      let index=1
      for sam in `echo $i2|tr "·" " "` ; do
@@ -120,8 +139,10 @@ for job in $script_list ; do
      let npac=${npac}+1
      popd > /dev/null
     done
+    fi
   # checks if this script process all the data at the same time, so it needs the output of all previous jobs
   elif echo $job| grep $SYNC_JOB > /dev/null ; then
+    if ! [ $MEASURE == "true" ] ; then
     pushd . > /dev/null
     i=`echo $job|sed s/.sh//`
     mkdir $i > /dev/null 2> /dev/null
@@ -150,8 +171,39 @@ for job in $script_list ; do
       grep CHECK ${REAL_JOB_SOURCE}/$job >> ${job}
       popd > /dev/null
     done
+    fi
    else
-    for i in `cat $INPUTFILE|tr -s "\t" " "|sed 's/[ \t]*$//'|tail -n +2`; do
+    count=1
+    task_counter=1
+    break_task=false
+    break_cpu=false
+    for i in `cat $INPUTFILE|tr -s "\t" " "|sed 's/[ \t]*$//'|tail -n +2` ; do
+      if [ -z `echo $NUM_CPU | grep ","` ] ; then
+        NUM_CPU+=","
+      fi
+      if [ -z `echo $NUM_TASK | grep ","` ] ; then
+        NUM_TASK+=","
+      fi     
+
+      cpu_option=`echo $NUM_CPU | cut -d ',' -f $count`
+      task_option=`echo $NUM_TASK | cut -d ',' -f $task_counter`      
+
+      if [ $MEASURE == "true" ] && ! [ -z $cpu_option ]; then                  
+        (( count++ ))  
+      else
+        break_cpu=true      
+      fi
+
+      if [ $MEASURE == "true" ] && ! [ -z $task_option ]; then                  
+        (( task_counter++ ))
+      else
+        break_task=true
+      fi
+      
+      if [ $break_task == "true" ] && [ $break_cpu == "true" ] ; then
+        break
+      fi
+
       pushd . > /dev/null
       mkdir $i > /dev/null 2> /dev/null
       cd $i
@@ -159,19 +211,21 @@ for job in $script_list ; do
       export suborder="-"
       export DEPEND=""
       export act_order=`echo $job|tr "_" " "|awk '{print $1}'`
-      export act_suborder=`echo $job|tr "_" " "|awk '{print $2}'`
-      cat ${REAL_JOB_SOURCE}/$job | sed s#SAMPLE#${i}#g |sed s#REFERENCE_GENOME#$REFERENCE_GENOME#g |sed s#DATA_ORIGIN#${DATA_ORIGIN}#g|sed s#TEMPORAL_DIR#${TEMPORAL_DIR}#g > ${job}
+      export act_suborder=`echo $job|tr "_" " "|awk '{print $2}'`                
+      cat ${REAL_JOB_SOURCE}/$job | sed s#SAMPLE#${i}#g |sed s#REFERENCE_GENOME#$REFERENCE_GENOME#g | sed s#DATA_ORIGIN#${DATA_ORIGIN}#g | sed s#TEMPORAL_DIR#${TEMPORAL_DIR}#g > ${job}                  
+      if [ $MEASURE == "true" ] && ! [ -z $cpu_option ] ; then sed -i 's/.*--cpus-per-task.*/#SBATCH --cpus-per-task='$cpu_option'/' $job; fi
+      if [ $MEASURE == "true" ] && [ $NUM_MEM != 0 ] ; then sed -i 's/.*--mem.*/#SBATCH --mem='$NUM_MEM'/' $job; fi
+      if [ $MEASURE == "true" ] && ! [ -z $task_option ]; then sed -i 's/.*--ntask.*/#SBATCH --ntask='$task_option'/' $job; fi      
       for idx in `seq 1 ${#arr[@]}` ; do
         sed -i s#${arr[${idx}]}#${sample[${idx}]}#g ${job}
       done
       echo `date` file for $job in $i created >> $LOG
-      echo `date` file for $job in $i created 
+      echo `date` file for $job in $i created       
       chmod +x ${job}
       let npac=${npac}+1
       popd > /dev/null
     done
-fi
-
+  fi
 done
 
 popd

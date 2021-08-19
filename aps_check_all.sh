@@ -93,9 +93,9 @@ for i in $l1 $l2 $l3 ; do
  for job in $scripts_list ; do
   let nchecks=${nchecks}+1  
   if grep \#SBATCH $job > /dev/null ; then
-  # The queue system is checked to verify if the job it´s been added in the queue.  
+  # The queue system is checked to verify if the job has been added in the queue.  
    if work_exists $i $job ; then
-    echo `date` job $job from sample $i is in the queue system, with id: $ADD_DEPEND.
+    echo `date` Job $job from sample $i is in the queue system, with id: $ADD_DEPEND.
     # If the job is not in the queue then the script checks if the job has successfully finished.
    else
     if work_done_successfully $i $job ; then

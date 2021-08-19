@@ -65,7 +65,7 @@ fi
 
 # Checking variable $PROCESS_LINE. This variable is used to know when a script is going to use
 # more than one sample. If we need to compare samples a new directory will be created where
-# the comparations will be allocated. In no value has been specified for this variable it will
+# the comparations will be allocated. If no value has been specified for this variable it will
 # take the default value as 'compare'.
 
 if test "x$PROCESS_LINE" == "x" ; then
