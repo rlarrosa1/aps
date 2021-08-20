@@ -178,32 +178,33 @@ for job in $script_list ; do
     break_task=false
     break_cpu=false
     for i in `cat $INPUTFILE|tr -s "\t" " "|sed 's/[ \t]*$//'|tail -n +2` ; do
-      if [ -z `echo $NUM_CPU | grep ","` ] ; then
-        NUM_CPU+=","
-      fi
-      if [ -z `echo $NUM_TASK | grep ","` ] ; then
-        NUM_TASK+=","
-      fi     
+      if [ $MEASURE == "true" ] ; then
+       if [ -z `echo $NUM_CPU | grep ","` ] ; then
+         NUM_CPU+=","
+       fi
+       if [ -z `echo $NUM_TASK | grep ","` ] ; then
+         NUM_TASK+=","
+       fi     
 
-      cpu_option=`echo $NUM_CPU | cut -d ',' -f $count`
-      task_option=`echo $NUM_TASK | cut -d ',' -f $task_counter`      
+       cpu_option=`echo $NUM_CPU | cut -d ',' -f $count`
+       task_option=`echo $NUM_TASK | cut -d ',' -f $task_counter`      
 
-      if [ $MEASURE == "true" ] && ! [ -z $cpu_option ]; then                  
+       if [ $MEASURE == "true" ] && ! [ -z $cpu_option ]; then                  
         (( count++ ))  
-      else
+       else
         break_cpu=true      
-      fi
+       fi
 
-      if [ $MEASURE == "true" ] && ! [ -z $task_option ]; then                  
+       if [ $MEASURE == "true" ] && ! [ -z $task_option ]; then                  
         (( task_counter++ ))
-      else
+       else
         break_task=true
-      fi
+       fi
       
-      if [ $break_task == "true" ] && [ $break_cpu == "true" ] ; then
+       if [ $break_task == "true" ] && [ $break_cpu == "true" ] ; then
         break
-      fi
-
+       fi
+      fi 
       pushd . > /dev/null
       mkdir $i > /dev/null 2> /dev/null
       cd $i
