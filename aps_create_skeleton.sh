@@ -35,7 +35,7 @@ export NUM_MEM=0
 
 # This loop will read the input parameters in the screen and it will perform the right acction depending on the parameters
 
-while getopts "h?vd:s:i:o:c:t:m:" opt; do
+while getopts "h?vd:s:i:oc:t:m:" opt; do
     case "$opt" in
     h|\?)
         show_help

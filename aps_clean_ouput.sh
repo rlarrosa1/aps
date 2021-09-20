@@ -98,8 +98,8 @@ for i in $l1 $l2 ; do
   if ! cd $i 2> /dev/null ; then    
     continue
   fi
-  lista_scripts=`ls $FILTER_SCRIPTS 2>/dev/null`
-  for job in $lista_scripts ; do
+  list_scripts=`ls $FILTER_SCRIPTS 2>/dev/null`
+  for job in $list_scripts ; do
     let nchecks=${nchecks}+1
     if grep SBATCH $job > /dev/null ; then
      if work_exists $i $job > /dev/null 2>&1 ; then
@@ -113,7 +113,7 @@ for i in $l1 $l2 ; do
        ./$job.get_info >> $INFOFILE	  
       fi
      else
-      if ! trabajo_con_fichero_salida $i $job ; then
+      if ! output_file $i $job ; then
        echo `date` job $job from sample $i never has been run, no output file exists.
     	 let unexec=${unexec}+1
       else
@@ -131,7 +131,7 @@ for i in $l1 $l2 ; do
     fi
    fi
   done
-  echo `date` checked sample $i with `echo $lista_scripts|wc -w` scripts, with $nerrors errors in total
+  echo `date` checked sample $i with `echo $list_scripts|wc -w` scripts, with $nerrors errors in total
   popd > /dev/null
 done
 

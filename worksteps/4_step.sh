@@ -36,4 +36,3 @@ sub=`echo SAMPLE-${step3}|bc -l`
 echo subtraction SAMPLE $sub 
 date 
 echo exit 0 
-#echo `date` init $0 >> $LOG

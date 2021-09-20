@@ -44,14 +44,12 @@ for item in `ls $INPUTDIR/measurement` ; do
    	possible_memory_efficiency=`grep "Memory Efficiency:" $INPUTDIR/measurement/$s | awk -F ': ' '{print $2}' | cut -d'%' -f 1`
    	possible_cpu_efficiency=`grep "CPU Efficiency:" $INPUTDIR/measurement/$s | awk -F ': ' '{print $2}' | cut -d'%' -f 1`
 
-   	if [ 1 -eq "$(echo "${cpu_efficiency} < ${possible_cpu_efficiendcy}" | bc)" ] && [ 1 -eq "$(echo "${memory_efficiency} < ${possible_memory_efficiency}" | bc)" ] ; then
-   		
+   	if [ 1 -eq "$(echo "${cpu_efficiency} < ${possible_cpu_efficiendcy}" | bc)" ] && [ 1 -eq "$(echo "${memory_efficiency} < ${possible_memory_efficiency}" | bc)" ] ; then   		
    		$cores_per_node=`grep "Cores per node" $s | awk -F ': ' '{print $2}'`
    		mem=`grep "Memory Efficiency:" $INPUTDIR/measurement/$s | awk -F 'of ' '{print $2}' | cut -d'%' -f 1 | sed 's/\.\b.*\ \b//g' | tr [:upper:] [:lower:]`
    		if ! [ $num_task -eq `grep "SBATCH --ntask" $INPUTDIR/$current_sample/$current_step | cut -d'=' -f 2` ] ; then
    			num_task=`grep "SBATCH --ntask" $INPUTDIR/$current_sample/$current_step | cut -d'=' -f 2`
-   		fi   		
-   		
+   		fi   		   		
    	elif [ 1 -eq "$(echo "${possible_cpu_efficiency} < ${cpu_efficiendcy}" | bc)" ] && [ 1 -eq "$(echo "${cpu_time_utilized} < ${cpu_time}" | bc)" ] ; then
    		num_nodes=`grep "Nodes:" $INPUTDIR/measurement/$s | awk -F ': ' '{print $2}'` 	
    		if ! [ $num_task -eq `grep "SBATCH --ntask" $INPUTDIR/$current_sample/$current_step | cut -d'=' -f 2` ] ; then

@@ -3,8 +3,7 @@
 echo Creating an example experiment...
 
 mkdir ../example_experiment
-cd ../example_experiment
-cp -R ../aps/worksteps .
+cp -R /aps/worksteps /example_experiment
 
 echo TEST1 TEST2 >> samples_to_process.lis
 echo 1 2 >> samples_to_process.lis

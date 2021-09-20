@@ -190,7 +190,7 @@ declare -A DEPENDtouse
 for key in "${!DEPENDarr[@]}"
  do
    DEPENDtouse["$key"]="${DEPENDarr["$key"]}"
- done
+done
  unset DEPENDarr
  declare -A DEPENDarr
  echo In step $i : jobs sent: $jobs_sent, jobs already finished: $jobs_finished, already queued: $jobs_queued
