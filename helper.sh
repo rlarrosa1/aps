@@ -102,7 +102,7 @@ fi
 
 lines=$(wc -l $INPUTFILE)
 
-if [ `echo $lines | awk -F ' ' '{print $1}'` -lt 2` ]
+if [ `echo $lines | awk -F ' ' '{print $1}'` -lt 2 ]
 then
   echo Error: $INPUTFILE is empty. Please add the information before start
   exit 4
