@@ -214,9 +214,9 @@ for job in $script_list ; do
       export act_order=`echo $job|tr "_" " "|awk '{print $1}'`
       export act_suborder=`echo $job|tr "_" " "|awk '{print $2}'`                
       cat ${REAL_JOB_SOURCE}/$job | sed s#SAMPLE#${i}#g |sed s#REFERENCE_GENOME#$REFERENCE_GENOME#g | sed s#DATA_ORIGIN#${DATA_ORIGIN}#g | sed s#TEMPORAL_DIR#${TEMPORAL_DIR}#g > ${job}                  
-      if [ $MEASURE == "true" ] && ! [ -z $cpu_option ] ; then sed -i 's/.*--cpus-per-task.*/#SBATCH --cpus-per-task='$cpu_option'/' $job; fi
+      if [ $MEASURE == "true" ] && ! [ -z $cpu_option ] && ! [ $cpu_option -eq 0 ]; then sed -i 's/.*--cpus-per-task.*/#SBATCH --cpus-per-task='$cpu_option'/' $job; fi
       if [ $MEASURE == "true" ] && [ $NUM_MEM != 0 ] ; then sed -i 's/.*--mem.*/#SBATCH --mem='$NUM_MEM'/' $job; fi
-      if [ $MEASURE == "true" ] && ! [ -z $task_option ]; then sed -i 's/.*--ntask.*/#SBATCH --ntask='$task_option'/' $job; fi      
+      if [ $MEASURE == "true" ] && ! [ -z $task_option ] && ! [ $task_option -eq 0 ]; then sed -i 's/.*--ntasks.*/#SBATCH --ntasks='$task_option'/' $job; fi      
       for idx in `seq 1 ${#arr[@]}` ; do
         sed -i s#${arr[${idx}]}#${sample[${idx}]}#g ${job}
       done
