@@ -19,6 +19,10 @@ function show_help
         echo "-s script         Only copy given script, it can contain wildchars."
         echo "-d directory      Only create files in given directory."
         echo "-i outfile        Writes in outfile info from the output of the scripts, using job.info to extract it."
+        echo "-o optimization   Activates the optimization option, for this option is mandatory use at least one of the rest optimization parameters."
+        echo "-c Cpu option     Number of cpus that will be used in the optimization. Use ',' to separte the options."
+        echo "-t Tasks option   Number of task that will be used in the optimization. Use ',' to separte the options."
+        echo "-m Memory option  Amount of memory that will be used in the optimization."
 }
 
 # Initializing some variables

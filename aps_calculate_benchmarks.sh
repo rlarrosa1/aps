@@ -66,7 +66,7 @@ for item in `ls $INPUTDIR/measurement` ; do
 
   sed -i 's/.*--cpus-per-task.*/#SBATCH --cpus-per-task='$cores_per_node'/' $INPUTDIR/measurement/$item
   sed -i 's/.*--mem.*/#SBATCH --mem='$NUM_MEM'/' $INPUTDIR/measurement/$item
-  echo $step has been updated with the best options to optimize the resources
+  echo $step has been updated with the best option to optimize the resources
   steps_array+=([$step]=1)
 
   fi
