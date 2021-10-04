@@ -14,9 +14,13 @@ lista_exomas_completa.txt.
 
 Inside this file are the name of the samples, ordered by columns, for example:
 
+
 AIS             INV             NORMAL
+
 RRS1024983      RRS1024984      RRS1024985
+
 RRS1024986      RRS1024987      RRS1024988
+
 RRS1024989      RRS1024990      RRS1024991
 
 
