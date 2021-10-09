@@ -11,7 +11,7 @@ echo 3 4 >> ~/example_experiment/samples_to_process.lis
 
 echo export EXPERIMENT=example >> ~/example_experiment/init_experiment.sh
 echo export INPUTDIR=~/example_experiment >> ~/example_experiment/init_experiment.sh
-echo export INPUTFILE=~/example_experiment/samples_to_process.lis >> ~/example_experiment/init_experiment.sh
+echo export INPUTFILE=~/samples_to_process.lis >> ~/example_experiment/init_experiment.sh
 echo export JOB_SOURCE=~/example_experiment/worksteps >> ~/example_experiment/init_experiment.sh
 
 chmod +x ~/example_experiment/init_experiment.sh
