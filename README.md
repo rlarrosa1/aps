@@ -37,4 +37,12 @@ Also some jobs can process several samples, those are recognized by the use of
 the word in the env var PROCESS_LINE inside the name of the script,
 by default compare.
 
+A user guide has been added to the repository as APS user guidie in PDF format.
+This guide is a good introduction for those who want to start to work with APS,
+the guide guides the user from the creation of a new flow until the new optimization
+feature which allows the user to setup configuration params for the execution and get
+the best option for the flow.
+
+The user guide is open for modifications, any user can add or modify the information
+in the guide. The goal of this project is the continuous evolve and improvement.
 
